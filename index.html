@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>White</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; cursor: none !important; }
 body, html { width: 100%; height: 100%; overflow: hidden; }
 
 .site {
@@ -112,7 +112,7 @@ canvas#bg-rain {
   padding: 11px 24px; border-radius: 11px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(200,200,210,0.15);
-  text-decoration: none; cursor: pointer;
+  text-decoration: none; cursor: none;
   transition: all 0.25s;
   box-shadow: 0 0 10px rgba(200,200,210,0.05), inset 0 1px 0 rgba(255,255,255,0.05);
 }
@@ -169,7 +169,7 @@ canvas#bg-rain {
   </div>
 </div>
 
-<!-- Rain — inline at bottom so DOM is ready -->
+<!-- Rain -->
 <script>
 (function () {
   const canvas = document.getElementById('bg-rain');
@@ -234,6 +234,70 @@ canvas#bg-rain {
     document.addEventListener('keydown',    tryPlay);
     document.addEventListener('touchstart', tryPlay);
   });
+})();
+</script>
+
+<!-- Cursor -->
+<script>
+(function () {
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  let mx = -999, my = -999;
+  const trail = [];
+  const ripples = [];
+
+  document.addEventListener('mousemove', function (e) { mx = e.clientX; my = e.clientY; });
+  document.addEventListener('click', function (e) {
+    ripples.push({ x: e.clientX, y: e.clientY, r: 0, op: 0.7 });
+  });
+
+  function frame() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    trail.push({ x: mx, y: my, life: 1 });
+    if (trail.length > 28) trail.shift();
+
+    trail.forEach(function (p, i) {
+      p.life -= 0.04;
+      var size = (i / trail.length) * 5;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(0.1, size), 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(200,200,210,' + (p.life * 0.35) + ')';
+      ctx.fill();
+    });
+
+    ripples.forEach(function (r, i) {
+      r.r += 4;
+      r.op -= 0.025;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(200,200,210,' + r.op + ')';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+      if (r.op <= 0) ripples.splice(i, 1);
+    });
+
+    ctx.beginPath();
+    ctx.arc(mx, my, 5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(240,240,242,0.85)';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(mx, my, 14, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(200,200,210,0.35)';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+
+    requestAnimationFrame(frame);
+  }
+  frame();
 })();
 </script>
 
